@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { History, Home, Menu, Settings } from 'lucide-react'
 import SettingsScreen from './SettingsScreen'
 import ChatHistory from './ChatHistory'
+import ButtonComponent from './ButtonComponent'
 
 export const MainPage = () => {
   const [activeTab, setActiveTab] = useState('main')
@@ -27,7 +28,7 @@ export const MainPage = () => {
         {activeTab === 'main' && (
           <>
             <div className='w-full flex items-center justify-center'>
-              <Button className="w-40 h-40 rounded-full bg-gradient-radial from-[#44FF06] to-[#31C300] shadow-lg"></Button>
+              <ButtonComponent />
             </div>
             <Input placeholder="番号入力" className="w-full" />
             <Input placeholder="送り先" className="w-full" />
