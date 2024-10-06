@@ -43,7 +43,6 @@ export const MainPage = () => {
                 <div className="h-4 w-4" />
               </Button>
             </div>
-            <Button className="w-full">会話する</Button>
           </>
         )}
         {activeTab === 'history' && (
