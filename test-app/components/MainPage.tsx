@@ -6,9 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from 'next/image'
 import { History, Home, Menu, Settings } from 'lucide-react'
-
-import SettingsScreen from './SettingsScreen'
 import ChatHistory from './ChatHistory'
+import SettingsScreen from './SettingsScreen'
 
 export const MainPage = () => {
   const [activeTab, setActiveTab] = useState('main')

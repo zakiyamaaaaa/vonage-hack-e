@@ -1,5 +1,5 @@
 import React from 'react';
-import ButtonComponent from './ButtonComponent';
+import ButtonComponent from '../components/ButtonComponent';
 
 const HomePage: React.FC = () => {
   return (
