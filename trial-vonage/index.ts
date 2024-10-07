@@ -1,1 +1,1 @@
-console.log("Hello via Bun!");
+console.log(process.env.NEXT_PUBLIC_API_KEY);
