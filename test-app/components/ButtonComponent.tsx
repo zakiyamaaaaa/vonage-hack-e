@@ -1,48 +1,87 @@
 'use client';
 
-import { 
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger 
-} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import { responseType } from '@/app/api/sendGemini/route';
-import { Loader2 } from 'lucide-react';
-import { Dialog, 
-  DialogClose, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger
-} from '@/components/ui/dialog';
+import { CommonDialog, CommonDrawer } from '@/components/CommonUI';
+import { MakeCallResponse, SessionSearchResponse } from '@/lib/types';
+import { Message } from './ChatHistory';
 
 interface ButtonComponentProps {
-  children?: string
+  hasError: boolean;
+  setErrorMessage: React.Dispatch<SetStateAction<string | null>>;
+  phoneNumber: string;
+  sentMessages: Message[];
+  setSentMessages: React.Dispatch<SetStateAction<Message[]>>;
+  sendTo: 'Discord' | 'Line';
+  children?: string;
 }
 
-const ButtonComponent: React.FC<ButtonComponentProps> = ({ children }) => {
+const ButtonComponent: React.FC<ButtonComponentProps> = ({
+  hasError,
+  setErrorMessage,
+  phoneNumber,
+  sentMessages,
+  setSentMessages,
+  sendTo,
+  children }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState<boolean>(false);
   const [drawerMessage, setDraserMessage] = useState<string>('');
   const [isSending, setIsSending] = useState<boolean>(false);
   const [dialogMessage, setDialogMessage] = useState<string>('');
+  const [talkId, setTalkId] = useState<string | undefined>(undefined);
+  const [talkAudioUrl, setTalkAudioUrl] = useState<string | undefined>(undefined);
+  const [isSendVoice, setIsSendVoice] = useState<boolean>(false);
 
-  const editDrawerMessage = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setDraserMessage(e.target.value);
+  const addMessage = (content: string) => {
+    const newMessage: Message = {
+      id: (sentMessages.length + 1).toString(),
+      content,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setSentMessages((prevMessages) => [...prevMessages, newMessage]);
+  };
+  
+  const comumnicateVonage = async () => {
+    setErrorMessage(null);
+    if (hasError) {
+      setErrorMessage('番号はハイフンなし11桁です')
+      return;
+    }
+    setIsSending(true);
+    setDialogMessage('電話をかけています');
+    setIsDialogOpen(true);
+    try {
+      const callNumber = phoneNumber.replace(/^0/, '81');
+      const res = await fetch('/api/vonage/make-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ to: callNumber })
+      });
+      const json: MakeCallResponse = await res.json();
+      setTalkId(json.data?.sessionId);
+      console.log(json.data)
+    } catch (error) {
+      console.error(error);
+    }
+    setIsSending(false);
+    setDialogMessage('文章を整える');
   }
   
-  const sendGemini = async () => {
+  const sendGeminiDatafromVonage = async () => {
+    if(!talkId) return;
     try {
-      setDialogMessage('AI考え中')
-      setIsDialogOpen(true);
+      setIsSending(true);
+      setDialogMessage('会話と声を取得しています')
+      const result = await fetch(`/api/vonage/search-session?sessionId=${encodeURIComponent(talkId)}`);
+      const data: SessionSearchResponse = await result.json();
+      const { lastUserMessage, audioUrl } = data;
+      setTalkAudioUrl(audioUrl);
+      setDialogMessage('AI考え中・・・')
       const res = await fetch('/api/sendGemini',
         {
         method: 'POST',
@@ -50,7 +89,7 @@ const ButtonComponent: React.FC<ButtonComponentProps> = ({ children }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          query: 'こんにちは。お元気ですか？'
+          query: lastUserMessage
         })
       });
       const json = await res.json() as responseType;
@@ -60,98 +99,83 @@ const ButtonComponent: React.FC<ButtonComponentProps> = ({ children }) => {
       console.error(error);
       setDraserMessage('AIとの通信に失敗しました');
     } finally {
+      setIsSending(false);
       setIsDialogOpen(false);
       setDialogMessage('');
       setIsDrawerOpen(true);
     }
   }
 
-  const sendDiscord = async () => {
+  const sender = async () => {
+    const message = isSendVoice ?
+    `${drawerMessage}
+    ${talkAudioUrl}` :
+    drawerMessage
     try {
       setIsSending(true);
-      const res = await fetch('/api/sendDiscord',
+      const endPoint = `/api/send${sendTo}`
+      const res = await fetch(endPoint,
         {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          message: drawerMessage
+          message
         })
       });
       const json = await res.json() as responseType;
       console.log(json);
       setDialogMessage('送信に成功しました');
-      setIsDialogOpen(true);
+      setIsMessageDialogOpen(true);
     } catch (error) {
       console.error(error);
       setDialogMessage('送信に失敗しました')
-      setIsDialogOpen(true);
+      setIsMessageDialogOpen(true);
     } finally {
       setIsSending(false)
       setIsDrawerOpen(false);
+      addMessage(drawerMessage);
     }
   }
 
 
   return (
     <div>
-      <Button className="w-40 h-40 rounded-full bg-gradient-radial from-[#44FF06] to-[#31C300] shadow-lg animate-pulse"
+      <Button className={`w-40 h-40 rounded-full bg-gradient-radial from-[#44FF06] to-[#31C300] shadow-lg ${hasError ? 'opacity-45':'animate-pulse'}`}
         // onClick={sendMessageToDiscord}
         // onClick={sendGemini}
-        onClick={async () => {
-          await sendGemini();
-        }}
+        onClick={comumnicateVonage}
       >
         {children}
       </Button>
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerTrigger asChild>
-        </DrawerTrigger>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>送信するメッセージ</DrawerTitle>
-            <DrawerDescription>
-            <label htmlFor="name" className="font-medium text-gray-900 text-sm mt-8 mb-2 block">
-              Description
-            </label>
-            <textarea
-              value={drawerMessage}
-              onChange={editDrawerMessage}
-              className="border border-gray-200 bg-white w-full resize-none rounded-lg p-3 pt-2.5 text-gray-900 outline-none focus:ring-2 focus:ring-black/5 focus:ring-offset-0"
-            />
-            </DrawerDescription>
-          </DrawerHeader>
-          <DrawerFooter>
-            <Button onClick={sendDiscord}>
-              {isSending ? <Loader2 className='animate-spin' /> : '送信する'}
-            </Button>
-            <DrawerClose asChild>
-              <Button onClick={() => setDraserMessage('')} variant="outline">Cancel</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle></DialogTitle>
-            <DialogDescription></DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center justify-center">
-            {dialogMessage}
-          </div>
-          <DialogFooter className="sm:justify-start">
-            <DialogClose asChild>
-              <Button type="button" variant="secondary">
-                Close
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CommonDialog
+       isDialogOpen={isMessageDialogOpen}
+       setIsDialogOpen={setIsMessageDialogOpen}
+       dialogMessage={dialogMessage}
+       setDialogMessage={setDialogMessage}
+       isSending={isSending}
+      />
+      <CommonDialog
+       isDialogOpen={isDialogOpen}
+       setIsDialogOpen={setIsDialogOpen}
+       dialogMessage={dialogMessage}
+       setDialogMessage={setDialogMessage}
+       handleButtonClick={sendGeminiDatafromVonage}
+       isSending={isSending}
+      />
+      <CommonDrawer
+       isDrawerOpen={isDrawerOpen}
+       setIsDrawerOpen={setIsDrawerOpen}
+       drawerMessage={drawerMessage}
+       setDrawerMessage={setDraserMessage}
+       handleButtonClick={sender}
+       isSending={isSending}
+       hasSwitch={true}
+       switchState={isSendVoice}
+       setSwitchState={setIsSendVoice}
+      />
+
     </div>
   );
 };

@@ -2,16 +2,22 @@
 
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Image from 'next/image'
 import { History, Home, Menu, Settings } from 'lucide-react'
 import SettingsScreen from './SettingsScreen'
-import ChatHistory from './ChatHistory'
+import ChatHistory, { Message } from './ChatHistory'
 import ButtonComponent from './ButtonComponent'
+import PhoneNumberInput from './PhoneNumberInput'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 export const MainPage = () => {
   const [activeTab, setActiveTab] = useState('main')
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [hasError, setHasError] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sentMessages, setSentMessages] = useState<Message[]>([]);
+  const [sendTo, setSendTo] = useState<'Discord' | 'Line'>('Discord');
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-background text-foreground">
@@ -24,29 +30,49 @@ export const MainPage = () => {
           </Button>
         </div>
       </header>
-      <main className="flex-1 p-4 space-y-4 overflow-y-auto h-screen">
+      <main className="flex flex-col p-10 space-y-4 overflow-y-auto h-screen">
         {activeTab === 'main' && (
           <>
-            <div className='w-full flex items-center justify-center'>
-              <ButtonComponent />
+            <PhoneNumberInput
+             phoneNumber={phoneNumber}
+             setPhoneNumber={setPhoneNumber}
+             setHasError={setHasError}
+            />
+            <div className="flex justify-center space-x-10">
+              <Avatar
+               onClick={() => setSendTo('Discord')}
+               className={`cursor-pointer p-1 rounded-full ${
+                sendTo === 'Discord' ? 'ring-4 ring-blue-500' : 'ring-2 ring-transparent'
+               }`}
+              >
+                <AvatarImage src="/discord.jpg" />
+                <AvatarFallback>Discord</AvatarFallback>
+              </Avatar>
+              <Avatar
+               onClick={() => setSendTo('Line')}
+               className={`cursor-pointer p-1 rounded-full ${
+                sendTo === 'Line' ? 'ring-4 ring-green-500' : 'ring-2 ring-transparent'
+               }`}
+              >
+                <AvatarImage src="/line.png" />
+                <AvatarFallback>LINE</AvatarFallback>
+              </Avatar>
             </div>
-            <Input placeholder="番号入力" className="w-full" />
-            <Input placeholder="送り先" className="w-full" />
-            <div className="flex justify-center space-x-4">
-              <Button variant="outline" size="icon">
-                <div className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <div className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon">
-                <div className="h-4 w-4" />
-              </Button>
+            <p className='w-full text-center text-[#c32525] font-bold'>{errorMessage}</p>
+            <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+              <ButtonComponent
+               hasError={hasError}
+               setErrorMessage={setErrorMessage}
+               phoneNumber={phoneNumber}
+               sentMessages={sentMessages}
+               setSentMessages={setSentMessages}
+               sendTo={sendTo}
+              />
             </div>
           </>
         )}
         {activeTab === 'history' && (
-          <ChatHistory />
+          <ChatHistory sentMessages={sentMessages} />
         )}
         {activeTab === 'settings' && (
           <SettingsScreen />
