@@ -59,7 +59,7 @@ export const MainPage = () => {
               </Avatar>
             </div>
             <p className='w-full text-center text-[#c32525] font-bold'>{errorMessage}</p>
-            <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+            <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pt-10'>
               <ButtonComponent
                hasError={hasError}
                setErrorMessage={setErrorMessage}
