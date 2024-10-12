@@ -20,7 +20,7 @@ export const MainPage = () => {
   const [sendTo, setSendTo] = useState<'Discord' | 'Line'>('Discord');
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-background text-foreground">
+    <div className="flex flex-col h-screen max-w-md mx-auto bg-background text-foreground" style={{ backgroundImage: "url('/images/background.webp')" }}>
       <header className="sticky top-0 left-0 w-full px-2 py-4 border-b bg-[#3ED85C] text-primary-foreground z-50">
         <div className="grid grid-cols-6 gap-4 items-center justify-center text-center">
           <Image src="/logo.png" alt="logo.png" width={100} height={100} className='col-span-1' />
