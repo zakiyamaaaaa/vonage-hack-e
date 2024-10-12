@@ -9,6 +9,21 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+		keyframes: {
+			'bounce-z': {
+			  '0%, 100%': {
+				transform: 'translateZ(0) scale(1)',
+				'animation-timing-function': 'cubic-bezier(0.8, 0, 1, 1)',
+			  },
+			  '50%': {
+				transform: 'translateZ(-30px) scale(0.95)',
+				'animation-timing-function': 'cubic-bezier(0, 0, 0.2, 1)',
+			  },
+			},
+		  },
+		  animation: {
+			'bounce-z': 'bounce-z 1s infinite',
+		  },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },

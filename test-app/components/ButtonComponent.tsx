@@ -142,7 +142,7 @@ const ButtonComponent: React.FC<ButtonComponentProps> = ({
 
   return (
     <div>
-      <Button className={`w-40 h-40 rounded-full bg-gradient-radial from-[#44FF06] to-[#31C300] shadow-lg ${hasError ? 'opacity-45':'animate-pulse'}`}
+      <Button className={`w-40 h-40 rounded-full bg-gradient-radial from-[#44FF06] to-[#31C300] shadow-lg ${hasError ? 'opacity-90':'animate-pulse'} active:animate-bounce-z`}
         // onClick={sendMessageToDiscord}
         // onClick={sendGemini}
         onClick={comumnicateVonage}
